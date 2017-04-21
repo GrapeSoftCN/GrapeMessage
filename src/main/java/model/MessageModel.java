@@ -60,7 +60,7 @@ public class MessageModel {
 		for (Object object2 : fileInfo.keySet()) {
 			msg.eq(object2.toString(), fileInfo.get(object2.toString()));
 		}
-		return msg.select();
+		return msg.limit(20).select();
 	}
 	public JSONObject find(String mid) {
 		return msg.eq("_id", new ObjectId(mid)).field("replynum").find();
@@ -93,7 +93,7 @@ public class MessageModel {
 
 	// 查询某篇文章下所有的留言
 	public JSONArray FindMsgByOID(String oid) {
-		return msg.eq("oid", oid).select();
+		return msg.eq("oid", oid).limit(20).select();
 	}
 
 	// 查询某篇文章下所有的留言
