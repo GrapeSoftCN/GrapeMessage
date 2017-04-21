@@ -70,6 +70,9 @@ public class Message {
 		return model.resultMessage(model.deleteMessage(mids.split(",")), "批量删除留言成功");
 	}
 
+	public String MaskMessage(String mid){
+		return model.resultMessage(model.deletesMessage(mid), "隐藏留言或回复成功");
+	}
 	// 搜索留言
 	@SuppressWarnings("unchecked")
 	public String SearchMessage(String msgInfo) {

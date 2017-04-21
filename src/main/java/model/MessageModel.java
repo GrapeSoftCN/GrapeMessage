@@ -42,6 +42,12 @@ public class MessageModel {
 		return msg.eq("_id", new ObjectId(mid)).delete() != null ? 0 : 99;
 	}
 
+	@SuppressWarnings("unchecked")
+	public int deletesMessage(String mid) {
+		JSONObject obj=new JSONObject();
+		obj.put("isdelete", "1");
+		return msg.eq("_id", new ObjectId(mid)).data(obj).update() != null ? 0 : 99;
+	}
 	public int deleteMessage(String[] mids) {
 		msg = (DBHelper) msg.or();
 		for (int i = 0; i < mids.length; i++) {
