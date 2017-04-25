@@ -8,12 +8,17 @@ import esayhelper.JSONHelper;
 import esayhelper.TimeHelper;
 import filterword.WordFilter;
 import model.MessageModel;
+import rpc.execRequest;
 
 public class Message {
 	private MessageModel model = new MessageModel();
 	private HashMap<String, Object> map = new HashMap<>();
 	private JSONObject _obj = new JSONObject();
-
+//	private static int userPlv;
+//	
+//	static{
+//		userPlv = Integer.parseInt(execRequest._run("GrapeAuth/Auth/getUserPlv", null).toString());
+//	}
 	public Message() {
 		map.put("messageId", model.getID());
 		map.put("messageDate", TimeHelper.nowMillis() + "");
@@ -22,6 +27,9 @@ public class Message {
 		map.put("oid", "0"); // 文章id
 		map.put("state", 0); // 状态
 		map.put("replynum", 0); // 留言被回复多少次
+		map.put("rPlv", 1000);  //读取  权限值
+		map.put("uPlv", 2000);  //修改  权限值
+		map.put("dPlv", 3000);  //删除  权限值
 	}
 
 	/**
@@ -56,6 +64,7 @@ public class Message {
 
 	// 修改留言
 	public String UpdateMessage(String mid, String msgInfo) {
+		
 		return model.resultMessage(model.updateMessage(mid, JSONHelper.string2json(msgInfo)),
 				"留言修改成功");
 	}

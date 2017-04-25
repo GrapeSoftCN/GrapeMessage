@@ -96,14 +96,22 @@ public class MessageModel {
 		return msg.eq("oid", oid).limit(20).select();
 	}
 
-	// 查询某篇文章下所有的留言
+	// 文章与留言关联
 	@SuppressWarnings("unchecked")
 	public int setMsgConOID(String mid,String oid) {
 		JSONObject object = new JSONObject();
 		object.put("oid", oid);
 		return msg.eq("_id", new ObjectId(mid)).data(object).update()!=null?0:99;
 	}
-
+	@SuppressWarnings("unchecked")
+	public JSONObject getPLV(String mid) {
+		JSONObject object = find(mid);
+		JSONObject _oObject = new JSONObject();
+		_oObject.put("update", object.get("uPlv").toString());
+		_oObject.put("delete", object.get("dPlv").toString());
+		_oObject.put("read", object.get("rPlv").toString());
+		return _oObject;
+	}
 	/**
 	 * 通过唯一标识符_id,查询留言信息
 	 * 
