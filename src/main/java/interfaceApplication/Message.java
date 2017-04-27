@@ -20,7 +20,6 @@ public class Message {
 //		userPlv = Integer.parseInt(execRequest._run("GrapeAuth/Auth/getUserPlv", null).toString());
 //	}
 	public Message() {
-		map.put("messageId", model.getID());
 		map.put("messageDate", TimeHelper.nowMillis() + "");
 		map.put("floor", model.getFloor());
 		map.put("fatherid", 0);
@@ -64,7 +63,6 @@ public class Message {
 
 	// 修改留言
 	public String UpdateMessage(String mid, String msgInfo) {
-		
 		return model.resultMessage(model.updateMessage(mid, JSONHelper.string2json(msgInfo)),
 				"留言修改成功");
 	}
