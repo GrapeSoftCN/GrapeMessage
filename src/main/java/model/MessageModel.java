@@ -49,11 +49,11 @@ public class MessageModel {
 		return msg.eq("_id", new ObjectId(mid)).data(obj).update() != null ? 0 : 99;
 	}
 	public int deleteMessage(String[] mids) {
-		msg = (DBHelper) msg.or();
+		msg.or();
 		for (int i = 0; i < mids.length; i++) {
 			msg.eq("_id", new ObjectId(mids[i]));
 		}
-		return msg.delete() != null ? 0 : 99;
+		return msg.deleteAll() != mids.length ? 0 : 99;
 	}
 
 	public JSONArray find(JSONObject fileInfo) {
