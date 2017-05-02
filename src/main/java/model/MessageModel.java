@@ -53,7 +53,7 @@ public class MessageModel {
 		for (int i = 0; i < mids.length; i++) {
 			msg.eq("_id", new ObjectId(mids[i]));
 		}
-		return msg.deleteAll() != mids.length ? 0 : 99;
+		return msg.deleteAll() == mids.length ? 0 : 99;
 	}
 
 	public JSONArray find(JSONObject fileInfo) {
