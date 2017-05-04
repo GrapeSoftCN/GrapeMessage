@@ -3,7 +3,6 @@ package model;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
 import java.util.Map.Entry;
 
 import org.bson.types.ObjectId;
@@ -13,19 +12,23 @@ import org.json.simple.JSONObject;
 import esayhelper.DBHelper;
 import esayhelper.formHelper;
 import esayhelper.formHelper.formdef;
+import rpc.execRequest;
 import esayhelper.jGrapeFW_Message;
 
 public class MessageModel {
 	private static DBHelper msg;
 	private static formHelper _form;
+	private JSONObject _obj = new JSONObject();
+
 	static {
 		msg = new DBHelper("mongodb", "message");
 		_form = msg.getChecker();
 	}
 
-	public MessageModel(){
+	public MessageModel() {
 		_form.putRule("messageContent", formdef.notNull);
 	}
+
 	public String addMessage(JSONObject object) {
 		if (!_form.checkRuleEx(object)) {
 			return resultMessage(1, ""); // 必填字段没有填
@@ -35,7 +38,8 @@ public class MessageModel {
 	}
 
 	public int updateMessage(String mid, JSONObject object) {
-		return msg.eq("_id", new ObjectId(mid)).data(object).update() != null ? 0 : 99;
+		return msg.eq("_id", new ObjectId(mid)).data(object).update() != null
+				? 0 : 99;
 	}
 
 	public int deleteMessage(String mid) {
@@ -44,10 +48,12 @@ public class MessageModel {
 
 	@SuppressWarnings("unchecked")
 	public int deletesMessage(String mid) {
-		JSONObject obj=new JSONObject();
+		JSONObject obj = new JSONObject();
 		obj.put("isdelete", "1");
-		return msg.eq("_id", new ObjectId(mid)).data(obj).update() != null ? 0 : 99;
+		return msg.eq("_id", new ObjectId(mid)).data(obj).update() != null ? 0
+				: 99;
 	}
+
 	public int deleteMessage(String[] mids) {
 		msg.or();
 		for (int i = 0; i < mids.length; i++) {
@@ -62,6 +68,7 @@ public class MessageModel {
 		}
 		return msg.limit(20).select();
 	}
+
 	public JSONObject find(String mid) {
 		return msg.eq("_id", new ObjectId(mid)).field("replynum").find();
 	}
@@ -70,7 +77,8 @@ public class MessageModel {
 	public JSONObject page(int idx, int pageSize) {
 		JSONArray array = msg.page(idx, pageSize);
 		JSONObject object = new JSONObject();
-		object.put("totalSize", (int) Math.ceil((double) msg.count() / pageSize));
+		object.put("totalSize",
+				(int) Math.ceil((double) msg.count() / pageSize));
 		object.put("currentPage", idx);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -84,7 +92,8 @@ public class MessageModel {
 		}
 		JSONArray array = msg.page(idx, pageSize);
 		JSONObject object = new JSONObject();
-		object.put("totalSize", (int) Math.ceil((double) msg.count() / pageSize));
+		object.put("totalSize",
+				(int) Math.ceil((double) msg.count() / pageSize));
 		object.put("currentPage", idx);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -98,11 +107,13 @@ public class MessageModel {
 
 	// 文章与留言关联
 	@SuppressWarnings("unchecked")
-	public int setMsgConOID(String mid,String oid) {
+	public int setMsgConOID(String mid, String oid) {
 		JSONObject object = new JSONObject();
 		object.put("oid", oid);
-		return msg.eq("_id", new ObjectId(mid)).data(object).update()!=null?0:99;
+		return msg.eq("_id", new ObjectId(mid)).data(object).update() != null
+				? 0 : 99;
 	}
+
 	@SuppressWarnings("unchecked")
 	public JSONObject getPLV(String mid) {
 		JSONObject object = find(mid);
@@ -112,6 +123,7 @@ public class MessageModel {
 		_oObject.put("read", object.get("rPlv").toString());
 		return _oObject;
 	}
+
 	/**
 	 * 通过唯一标识符_id,查询留言信息
 	 * 
@@ -123,15 +135,23 @@ public class MessageModel {
 	}
 
 	public long countReply(String fid) {
-		return msg.eq("fatherid", fid).count()+1;
+		return msg.eq("fatherid", fid).count();
 	}
+
 	public int getFloor() {
 		return Integer.parseInt(msg._count()) + 1;
 	}
 
-	public String getID() {
-		String str = UUID.randomUUID().toString();
-		return str.replace("-", "");
+	public boolean getUPLV(String mid,String userid) {
+		String uPLV = find(mid).get("uplv").toString();
+		String tip = execRequest
+				._run("GrapeAuth/Auth/UpdatePLV/s:" + uPLV + "/s:" + userid,
+						null)
+				.toString();
+		if (!"0".equals(tip)) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -144,15 +164,29 @@ public class MessageModel {
 	@SuppressWarnings("unchecked")
 	public JSONObject AddMap(HashMap<String, Object> map, JSONObject object) {
 		if (map.entrySet() != null) {
-			Iterator<Entry<String, Object>> iterator = map.entrySet().iterator();
+			Iterator<Entry<String, Object>> iterator = map.entrySet()
+					.iterator();
 			while (iterator.hasNext()) {
-				Map.Entry<String, Object> entry = (Map.Entry<String, Object>) iterator.next();
+				Map.Entry<String, Object> entry = (Map.Entry<String, Object>) iterator
+						.next();
 				if (!object.containsKey(entry.getKey())) {
 					object.put(entry.getKey(), entry.getValue());
 				}
 			}
 		}
 		return object;
+	}
+
+	@SuppressWarnings("unchecked")
+	public String resultMessage(JSONObject object) {
+		_obj.put("records", object);
+		return resultMessage(0, _obj.toString());
+	}
+
+	@SuppressWarnings("unchecked")
+	public String resultMessage(JSONArray array) {
+		_obj.put("records", array);
+		return resultMessage(0, _obj.toString());
 	}
 
 	public String resultMessage(int num, String message) {
@@ -163,6 +197,15 @@ public class MessageModel {
 			break;
 		case 1:
 			msg = "必填项没有填";
+			break;
+		case 2:
+			msg = "没有创建数据权限，请联系管理员进行权限调整";
+			break;
+		case 3:
+			msg = "没有修改数据权限，请联系管理员进行权限调整";
+			break;
+		case 4:
+			msg = "没有删除数据权限，请联系管理员进行权限调整";
 			break;
 		default:
 			msg = "其它异常";
