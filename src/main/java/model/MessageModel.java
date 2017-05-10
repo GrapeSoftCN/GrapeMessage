@@ -12,7 +12,6 @@ import org.json.simple.JSONObject;
 import esayhelper.DBHelper;
 import esayhelper.formHelper;
 import esayhelper.formHelper.formdef;
-import rpc.execRequest;
 import esayhelper.jGrapeFW_Message;
 
 public class MessageModel {
@@ -140,18 +139,6 @@ public class MessageModel {
 
 	public int getFloor() {
 		return Integer.parseInt(msg._count()) + 1;
-	}
-
-	public boolean getUPLV(String mid,String userid) {
-		String uPLV = find(mid).get("uplv").toString();
-		String tip = execRequest
-				._run("GrapeAuth/Auth/UpdatePLV/s:" + uPLV + "/s:" + userid,
-						null)
-				.toString();
-		if (!"0".equals(tip)) {
-			return false;
-		}
-		return true;
 	}
 
 	/**

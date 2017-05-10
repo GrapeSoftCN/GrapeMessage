@@ -8,7 +8,6 @@ import esayhelper.JSONHelper;
 import esayhelper.TimeHelper;
 import filterword.WordFilter;
 import model.MessageModel;
-import rpc.execRequest;
 
 public class Message {
 	private MessageModel model = new MessageModel();
