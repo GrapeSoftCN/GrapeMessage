@@ -9,6 +9,8 @@ import org.bson.types.ObjectId;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import apps.appsProxy;
+import database.db;
 import esayhelper.DBHelper;
 import esayhelper.formHelper;
 import esayhelper.formHelper.formdef;
@@ -20,64 +22,69 @@ public class MessageModel {
 	private JSONObject _obj = new JSONObject();
 
 	static {
-		msg = new DBHelper("mongodb", "message");
+		msg = new DBHelper(appsProxy.configValue().get("db").toString(),
+				"message");
+		// msg = new DBHelper("mongodb", "message");
 		_form = msg.getChecker();
 	}
 
 	public MessageModel() {
 		_form.putRule("messageContent", formdef.notNull);
 	}
-
+	private db bind(){
+		return msg.bind(String.valueOf(appsProxy.appid()));
+	}
+	
 	public String addMessage(JSONObject object) {
 		if (!_form.checkRuleEx(object)) {
 			return resultMessage(1, ""); // 必填字段没有填
 		}
-		String info = msg.data(object).insertOnce().toString();
+		String info = bind().data(object).insertOnce().toString();
 		return FindMsgByID(info).toString();
 	}
 
 	public int updateMessage(String mid, JSONObject object) {
-		return msg.eq("_id", new ObjectId(mid)).data(object).update() != null
+		return bind().eq("_id", new ObjectId(mid)).data(object).update() != null
 				? 0 : 99;
 	}
 
 	public int deleteMessage(String mid) {
-		return msg.eq("_id", new ObjectId(mid)).delete() != null ? 0 : 99;
+		return bind().eq("_id", new ObjectId(mid)).delete() != null ? 0 : 99;
 	}
 
 	@SuppressWarnings("unchecked")
 	public int deletesMessage(String mid) {
 		JSONObject obj = new JSONObject();
 		obj.put("isdelete", "1");
-		return msg.eq("_id", new ObjectId(mid)).data(obj).update() != null ? 0
+		return bind().eq("_id", new ObjectId(mid)).data(obj).update() != null ? 0
 				: 99;
 	}
 
 	public int deleteMessage(String[] mids) {
-		msg.or();
+		bind().or();
 		for (int i = 0; i < mids.length; i++) {
-			msg.eq("_id", new ObjectId(mids[i]));
+			bind().eq("_id", new ObjectId(mids[i]));
 		}
-		return msg.deleteAll() == mids.length ? 0 : 99;
+		return bind().deleteAll() == mids.length ? 0 : 99;
 	}
 
 	public JSONArray find(JSONObject fileInfo) {
 		for (Object object2 : fileInfo.keySet()) {
-			msg.eq(object2.toString(), fileInfo.get(object2.toString()));
+			bind().eq(object2.toString(), fileInfo.get(object2.toString()));
 		}
-		return msg.limit(20).select();
+		return bind().limit(20).select();
 	}
 
 	public JSONObject find(String mid) {
-		return msg.eq("_id", new ObjectId(mid)).field("replynum").find();
+		return bind().eq("_id", new ObjectId(mid)).field("replynum").find();
 	}
 
 	@SuppressWarnings("unchecked")
 	public JSONObject page(int idx, int pageSize) {
-		JSONArray array = msg.page(idx, pageSize);
+		JSONArray array = bind().page(idx, pageSize);
 		JSONObject object = new JSONObject();
 		object.put("totalSize",
-				(int) Math.ceil((double) msg.count() / pageSize));
+				(int) Math.ceil((double) bind().count() / pageSize));
 		object.put("currentPage", idx);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -87,12 +94,12 @@ public class MessageModel {
 	@SuppressWarnings("unchecked")
 	public JSONObject page(int idx, int pageSize, JSONObject fileInfo) {
 		for (Object object2 : fileInfo.keySet()) {
-			msg.eq(object2.toString(), fileInfo.get(object2.toString()));
+			bind().eq(object2.toString(), fileInfo.get(object2.toString()));
 		}
-		JSONArray array = msg.page(idx, pageSize);
+		JSONArray array = bind().dirty().page(idx, pageSize);
 		JSONObject object = new JSONObject();
 		object.put("totalSize",
-				(int) Math.ceil((double) msg.count() / pageSize));
+				(int) Math.ceil((double) bind().count() / pageSize));
 		object.put("currentPage", idx);
 		object.put("pageSize", pageSize);
 		object.put("data", array);
@@ -101,7 +108,7 @@ public class MessageModel {
 
 	// 查询某篇文章下所有的留言
 	public JSONArray FindMsgByOID(String oid) {
-		return msg.eq("oid", oid).limit(20).select();
+		return bind().eq("oid", oid).limit(20).select();
 	}
 
 	// 文章与留言关联
@@ -109,7 +116,7 @@ public class MessageModel {
 	public int setMsgConOID(String mid, String oid) {
 		JSONObject object = new JSONObject();
 		object.put("oid", oid);
-		return msg.eq("_id", new ObjectId(mid)).data(object).update() != null
+		return bind().eq("_id", new ObjectId(mid)).data(object).update() != null
 				? 0 : 99;
 	}
 
@@ -130,15 +137,15 @@ public class MessageModel {
 	 * @return
 	 */
 	public JSONObject FindMsgByID(String mid) {
-		return msg.eq("_id", new ObjectId(mid)).find();
+		return bind().eq("_id", new ObjectId(mid)).find();
 	}
 
 	public long countReply(String fid) {
-		return msg.eq("fatherid", fid).count();
+		return bind().eq("fatherid", fid).count();
 	}
 
 	public int getFloor() {
-		return Integer.parseInt(msg._count()) + 1;
+		return Integer.parseInt(String.valueOf(bind().count())) + 1;
 	}
 
 	/**
