@@ -14,6 +14,7 @@ import database.db;
 import esayhelper.DBHelper;
 import esayhelper.formHelper;
 import esayhelper.formHelper.formdef;
+import nlogger.nlogger;
 import esayhelper.jGrapeFW_Message;
 
 public class MessageModel {
@@ -22,33 +23,48 @@ public class MessageModel {
 	private JSONObject _obj = new JSONObject();
 
 	static {
-		msg = new DBHelper(appsProxy.configValue().get("db").toString(),
-				"message");
-		// msg = new DBHelper("mongodb", "message");
+		msg = new DBHelper(appsProxy.configValue().get("db").toString(), "message");
 		_form = msg.getChecker();
 	}
 
 	public MessageModel() {
 		_form.putRule("messageContent", formdef.notNull);
 	}
-	private db bind(){
+
+	private db bind() {
 		return msg.bind(String.valueOf(appsProxy.appid()));
 	}
-	
+
 	public String addMessage(JSONObject object) {
-		if (!_form.checkRuleEx(object)) {
-			return resultMessage(1, ""); // 必填字段没有填
+		String info = "";
+		if (object!=null) {
+			if (!_form.checkRuleEx(object)) {
+				return resultMessage(1, ""); // 必填字段没有填
+			}
+			info = bind().data(object).insertOnce().toString();
 		}
-		String info = bind().data(object).insertOnce().toString();
-		return FindMsgByID(info).toString();
+		if (("").equals(info)) {
+			return resultMessage(99);
+		}
+		JSONObject obj = FindMsgByID(info);
+		return obj!=null?obj.toString():null;
 	}
 
 	public int updateMessage(String mid, JSONObject object) {
-		return bind().eq("_id", new ObjectId(mid)).data(object).update() != null
-				? 0 : 99;
+		if (object!=null) {
+			try {
+				
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+		}
+		return bind().eq("_id", new ObjectId(mid)).data(object).update() != null ? 0 : 99;
 	}
 
 	public int deleteMessage(String mid) {
+		if (mid.contains(",")) {
+			return 99;
+		}
 		return bind().eq("_id", new ObjectId(mid)).delete() != null ? 0 : 99;
 	}
 
@@ -56,8 +72,7 @@ public class MessageModel {
 	public int deletesMessage(String mid) {
 		JSONObject obj = new JSONObject();
 		obj.put("isdelete", "1");
-		return bind().eq("_id", new ObjectId(mid)).data(obj).update() != null ? 0
-				: 99;
+		return bind().eq("_id", new ObjectId(mid)).data(obj).update() != null ? 0 : 99;
 	}
 
 	public int deleteMessage(String[] mids) {
@@ -68,47 +83,78 @@ public class MessageModel {
 		return bind().deleteAll() == mids.length ? 0 : 99;
 	}
 
-	public JSONArray find(JSONObject fileInfo) {
-		for (Object object2 : fileInfo.keySet()) {
-			bind().eq(object2.toString(), fileInfo.get(object2.toString()));
+	public String find(JSONObject fileInfo) {
+		JSONArray array = null;
+		try {
+			array = new JSONArray();
+			for (Object object2 : fileInfo.keySet()) {
+				bind().eq(object2.toString(), fileInfo.get(object2.toString()));
+			}
+			array = bind().limit(20).select();
+		} catch (Exception e) {
+			nlogger.logout(e);
+			array = null;
 		}
-		return bind().limit(20).select();
+
+		return resultMessage(array);
 	}
 
 	public JSONObject find(String mid) {
-		return bind().eq("_id", new ObjectId(mid)).field("replynum").find();
+		JSONObject object = bind().eq("_id", new ObjectId(mid)).field("replynum").find();
+		return object != null ? object : null;
 	}
 
 	@SuppressWarnings("unchecked")
-	public JSONObject page(int idx, int pageSize) {
-		JSONArray array = bind().page(idx, pageSize);
-		JSONObject object = new JSONObject();
-		object.put("totalSize",
-				(int) Math.ceil((double) bind().count() / pageSize));
-		object.put("currentPage", idx);
-		object.put("pageSize", pageSize);
-		object.put("data", array);
-		return object;
-	}
-
-	@SuppressWarnings("unchecked")
-	public JSONObject page(int idx, int pageSize, JSONObject fileInfo) {
-		for (Object object2 : fileInfo.keySet()) {
-			bind().eq(object2.toString(), fileInfo.get(object2.toString()));
+	public String page(int idx, int pageSize) {
+		JSONObject object = null;
+		try {
+			JSONArray array = bind().page(idx, pageSize);
+			object = new JSONObject();
+			object.put("totalSize", (int) Math.ceil((double) bind().count() / pageSize));
+			object.put("currentPage", idx);
+			object.put("pageSize", pageSize);
+			object.put("data", array);
+		} catch (Exception e) {
+			nlogger.logout(e);
+			object = null;
 		}
-		JSONArray array = bind().dirty().page(idx, pageSize);
-		JSONObject object = new JSONObject();
-		object.put("totalSize",
-				(int) Math.ceil((double) bind().count() / pageSize));
-		object.put("currentPage", idx);
-		object.put("pageSize", pageSize);
-		object.put("data", array);
-		return object;
+
+		return resultMessage(object);
+	}
+
+	@SuppressWarnings("unchecked")
+	public String page(int idx, int pageSize, JSONObject fileInfo) {
+		JSONObject object = null;
+		if (fileInfo != null) {
+			try {
+				for (Object object2 : fileInfo.keySet()) {
+					bind().eq(object2.toString(), fileInfo.get(object2.toString()));
+				}
+				JSONArray array = bind().dirty().page(idx, pageSize);
+				object = new JSONObject();
+				object.put("totalSize", (int) Math.ceil((double) bind().count() / pageSize));
+				object.put("currentPage", idx);
+				object.put("pageSize", pageSize);
+				object.put("data", array);
+			} catch (Exception e) {
+				nlogger.logout(e);
+				object = null;
+			}
+		}
+		return resultMessage(object);
 	}
 
 	// 查询某篇文章下所有的留言
-	public JSONArray FindMsgByOID(String oid) {
-		return bind().eq("oid", oid).limit(20).select();
+	public String FindMsgByOID(String oid) {
+		JSONArray array = null;
+		try {
+			array = new JSONArray();
+			array = bind().eq("oid", oid).limit(20).select();
+		} catch (Exception e) {
+			nlogger.logout(e);
+			array = null;
+		}
+		return resultMessage(array);
 	}
 
 	// 文章与留言关联
@@ -116,8 +162,7 @@ public class MessageModel {
 	public int setMsgConOID(String mid, String oid) {
 		JSONObject object = new JSONObject();
 		object.put("oid", oid);
-		return bind().eq("_id", new ObjectId(mid)).data(object).update() != null
-				? 0 : 99;
+		return bind().eq("_id", new ObjectId(mid)).data(object).update() != null ? 0 : 99;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -137,15 +182,30 @@ public class MessageModel {
 	 * @return
 	 */
 	public JSONObject FindMsgByID(String mid) {
-		return bind().eq("_id", new ObjectId(mid)).find();
+		JSONObject object = bind().eq("_id", new ObjectId(mid)).find();
+		return object != null ? object : null;
 	}
 
 	public long countReply(String fid) {
-		return bind().eq("fatherid", fid).count();
+		long code = 0;
+		try {
+			code = bind().eq("fatherid", fid).count();
+		} catch (Exception e) {
+			nlogger.logout(e);
+			code = 0;
+		}
+		return code;
 	}
 
 	public int getFloor() {
-		return Integer.parseInt(String.valueOf(bind().count())) + 1;
+		int floor = 0;
+		try {
+			floor = Integer.parseInt(String.valueOf(bind().count())) + 1;
+		} catch (Exception e) {
+			nlogger.logout(e);
+			floor = 0;
+		}
+		return floor;
 	}
 
 	/**
@@ -157,28 +217,38 @@ public class MessageModel {
 	 */
 	@SuppressWarnings("unchecked")
 	public JSONObject AddMap(HashMap<String, Object> map, JSONObject object) {
-		if (map.entrySet() != null) {
-			Iterator<Entry<String, Object>> iterator = map.entrySet()
-					.iterator();
-			while (iterator.hasNext()) {
-				Map.Entry<String, Object> entry = (Map.Entry<String, Object>) iterator
-						.next();
-				if (!object.containsKey(entry.getKey())) {
-					object.put(entry.getKey(), entry.getValue());
+		if (object != null) {
+			if (map.entrySet() != null) {
+				Iterator<Entry<String, Object>> iterator = map.entrySet().iterator();
+				while (iterator.hasNext()) {
+					Map.Entry<String, Object> entry = (Map.Entry<String, Object>) iterator.next();
+					if (!object.containsKey(entry.getKey())) {
+						object.put(entry.getKey(), entry.getValue());
+					}
 				}
 			}
 		}
 		return object;
 	}
 
+	private String resultMessage(int num) {
+		return resultMessage(num,"");
+	}
+
 	@SuppressWarnings("unchecked")
 	public String resultMessage(JSONObject object) {
+		if (object == null) {
+			object = new JSONObject();
+		}
 		_obj.put("records", object);
 		return resultMessage(0, _obj.toString());
 	}
 
 	@SuppressWarnings("unchecked")
-	public String resultMessage(JSONArray array) {
+	private String resultMessage(JSONArray array) {
+		if (array == null) {
+			array = new JSONArray();
+		}
 		_obj.put("records", array);
 		return resultMessage(0, _obj.toString());
 	}
