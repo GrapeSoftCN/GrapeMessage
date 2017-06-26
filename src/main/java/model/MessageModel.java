@@ -10,10 +10,10 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import apps.appsProxy;
+import check.formHelper;
+import check.formHelper.formdef;
+import database.DBHelper;
 import database.db;
-import esayhelper.DBHelper;
-import esayhelper.formHelper;
-import esayhelper.formHelper.formdef;
 import nlogger.nlogger;
 import esayhelper.jGrapeFW_Message;
 
@@ -37,7 +37,7 @@ public class MessageModel {
 
 	public String addMessage(JSONObject object) {
 		String info = "";
-		if (object!=null) {
+		if (object != null) {
 			if (!_form.checkRuleEx(object)) {
 				return resultMessage(1, ""); // 必填字段没有填
 			}
@@ -47,18 +47,15 @@ public class MessageModel {
 			return resultMessage(99);
 		}
 		JSONObject obj = FindMsgByID(info);
-		return obj!=null?obj.toString():null;
+		return obj != null ? obj.toString() : null;
 	}
 
 	public int updateMessage(String mid, JSONObject object) {
-		if (object!=null) {
-			try {
-				
-			} catch (Exception e) {
-				// TODO: handle exception
-			}
+		int code = 99;
+		if (object != null) {
+			code = bind().eq("_id", new ObjectId(mid)).data(object).update() != null ? 0 : 99;
 		}
-		return bind().eq("_id", new ObjectId(mid)).data(object).update() != null ? 0 : 99;
+		return code;
 	}
 
 	public int deleteMessage(String mid) {
@@ -232,7 +229,7 @@ public class MessageModel {
 	}
 
 	private String resultMessage(int num) {
-		return resultMessage(num,"");
+		return resultMessage(num, "");
 	}
 
 	@SuppressWarnings("unchecked")
