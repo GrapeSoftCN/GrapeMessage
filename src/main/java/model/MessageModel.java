@@ -9,13 +9,13 @@ import org.bson.types.ObjectId;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import JGrapeSystem.jGrapeFW_Message;
 import apps.appsProxy;
 import check.formHelper;
 import check.formHelper.formdef;
 import database.DBHelper;
 import database.db;
 import nlogger.nlogger;
-import esayhelper.jGrapeFW_Message;
 
 public class MessageModel {
 	private static DBHelper msg;
@@ -110,7 +110,7 @@ public class MessageModel {
 			object.put("totalSize", (int) Math.ceil((double) bind().count() / pageSize));
 			object.put("currentPage", idx);
 			object.put("pageSize", pageSize);
-			object.put("data", array);
+			object.put("data", dencode(array));
 		} catch (Exception e) {
 			nlogger.logout(e);
 			object = null;
@@ -132,10 +132,12 @@ public class MessageModel {
 				object.put("totalSize", (int) Math.ceil((double) bind().count() / pageSize));
 				object.put("currentPage", idx);
 				object.put("pageSize", pageSize);
-				object.put("data", array);
+				object.put("data", dencode(array));
 			} catch (Exception e) {
 				nlogger.logout(e);
 				object = null;
+			}finally {
+				bind().clear();
 			}
 		}
 		return resultMessage(object);
@@ -228,6 +230,20 @@ public class MessageModel {
 		return object;
 	}
 
+	@SuppressWarnings("unchecked")
+	private JSONArray dencode(JSONArray array) {
+		if (array.size() == 0) {
+			return array;
+		}
+		for (int i = 0; i < array.size(); i++) {
+			JSONObject object = (JSONObject) array.get(i);
+			if (object.containsKey("content") && object.get("content") != "") {
+				object.put("content", object.escapeHtmlGet("content"));
+			}
+			array.set(i, object);
+		}
+		return array;
+	}
 	private String resultMessage(int num) {
 		return resultMessage(num, "");
 	}

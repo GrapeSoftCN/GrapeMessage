@@ -4,11 +4,11 @@ import java.util.HashMap;
 
 import org.json.simple.JSONObject;
 
-import esayhelper.JSONHelper;
-import esayhelper.TimeHelper;
+import json.JSONHelper;
 import model.MessageModel;
 import nlogger.nlogger;
 import security.codec;
+import time.TimeHelper;
 
 public class Message {
 	private MessageModel model = new MessageModel();
@@ -53,7 +53,8 @@ public class Message {
 				if (code == 0) {
 					String messageContent = codec.DecodeHtmlTag((String) object.get("messageContent"));
 					messageContent = codec.decodebase64(messageContent);
-					object.put("messageContent", messageContent);
+//					object.put("messageContent", messageContent);
+					object.escapeHtmlPut("messageContent", messageContent);
 					result = new JSONObject();
 					String info = model.addMessage(object);
 					result = (info != null ? JSONHelper.string2json(info) : null);
