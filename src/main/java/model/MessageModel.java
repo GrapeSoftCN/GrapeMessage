@@ -18,16 +18,14 @@ import database.db;
 import nlogger.nlogger;
 
 public class MessageModel {
-	private static DBHelper msg;
-	private static formHelper _form;
+	private DBHelper msg;
+	private formHelper _form;
 	private JSONObject _obj = new JSONObject();
 
-	static {
-		msg = new DBHelper(appsProxy.configValue().get("db").toString(), "message");
-		_form = msg.getChecker();
-	}
 
 	public MessageModel() {
+		msg = new DBHelper(appsProxy.configValue().get("db").toString(), "message");
+		_form = msg.getChecker();
 		_form.putRule("messageContent", formdef.notNull);
 	}
 

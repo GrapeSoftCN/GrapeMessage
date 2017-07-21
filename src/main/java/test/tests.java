@@ -1,7 +1,6 @@
 package test;
 
 import httpServer.booter;
-import interfaceApplication.Message;
 
 public class tests {
 	public static void main(String[] args) {
